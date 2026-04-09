@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0a1628 0%, #0d2347 50%, #0a1628 100%);
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  .calc-wrapper {
+    perspective: 1000px;
+  }
+
+  .calculator {
+    background: linear-gradient(145deg, #ff2929, #1565c0);
+    border-radius: 28px;
+    padding: 28px 24px 24px;
+    width: 320px;
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.12),
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      0 0 60px rgba(41,121,255,0.3);
+    animation: floatIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(40px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* DISPLAY */
+  .display-wrap {
+    background: linear-gradient(160deg, #e8f4ff, #c8deff);
+    border-radius: 12px;
+    padding: 14px 18px 10px;
+    margin-bottom: 22px;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.4);
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 2px;
+    overflow: hidden;
+  }
+
+  .expression {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: #5a7aaa;
+    min-height: 16px;
+    word-break: break-all;
+    text-align: right;
+  }
+
+  .display {
+    font-family: 'Orbitron', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    color: #0a1628;
+    word-break: break-all;
+    text-align: right;
+    transition: all 0.1s;
+    line-height: 1.1;
+  }
+
+  .display.flash {
+    transform: scale(1.05);
+    color: #1565c0;
+  }
+
+  /* GRID */
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  /* BASE BUTTON */
+  button {
+    background: linear-gradient(145deg, #d41e1e, #a81524);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    height: 60px;
+    cursor: pointer;
+    box-shadow:
+      0 6px 0 #0f3480,
+      0 8px 12px rgba(0,0,0,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.18);
+    transition: transform 0.08s, box-shadow 0.08s, background 0.15s;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+  }
+
+  button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    border-radius: inherit;
+    transition: background 0.15s;
+  }
+
+  button:hover::after { background: rgba(255,255,255,0.08); }
+
+  button:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #800f0f, 0 4px 6px rgba(0,0,0,0.2);
+  }
+
+  /* OPERATOR BUTTONS */
+  button.op {
+    background: linear-gradient(145deg, #d2193e, #a10d0d);
+    box-shadow: 0 6px 0 #082a6e, 0 8px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18);
+    font-size: 22px;
+  }
+  button.op:active { box-shadow: 0 2px 0 #6e0808, 0 4px 6px rgba(0,0,0,0.2); }
+
+  /* CLEAR / SPECIAL */
+  button.clear {
+    background: linear-gradient(145deg, #ef5350, #b71c1c);
+    box-shadow: 0 6px 0 #7f0000, 0 8px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  button.clear:active { box-shadow: 0 2px 0 #7f0000, 0 4px 6px rgba(0,0,0,0.2); }
+
+  /* EQUALS */
+  button.equals {
+    background: linear-gradient(145deg, #ff7676, #ff0000);
+    color: #0a1628;
+    box-shadow: 0 6px 0 #b83a00, 0 8px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+    font-size: 24px;
+  }
+  button.equals:active { box-shadow: 0 2px 0 #b85300, 0 4px 6px rgba(0,0,0,0.2); }
+
+  /* ZERO spans 2 cols */
+  button.zero { grid-column: span 2; }
+
+  /* RIPPLE */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    transform: scale(0);
+    animation: ripple 0.4s linear;
+    pointer-events: none;
+  }
+  @keyframes ripple {
+    to { transform: scale(4); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="calc-wrapper">
+  <div class="calculator">
+    <div class="display-wrap">
+      <div class="expression" id="expression"></div>
+      <div class="display" id="display">0</div>
+    </div>
+    <div class="buttons">
+      <button class="clear" onclick="clearAll(this)">AC</button>
+      <button class="op"    onclick="toggleSign(this)">+/-</button>
+      <button class="op"    onclick="percent(this)">%</button>
+      <button class="op"    onclick="setOp('/',this)">÷</button>
+
+      <button onclick="append('7',this)">7</button>
+      <button onclick="append('8',this)">8</button>
+      <button onclick="append('9',this)">9</button>
+      <button class="op" onclick="setOp('*',this)">×</button>
+
+      <button onclick="append('4',this)">4</button>
+      <button onclick="append('5',this)">5</button>
+      <button onclick="append('6',this)">6</button>
+      <button class="op" onclick="setOp('-',this)">−</button>
+
+      <button onclick="append('1',this)">1</button>
+      <button onclick="append('2',this)">2</button>
+      <button onclick="append('3',this)">3</button>
+      <button class="op" onclick="setOp('+',this)">+</button>
+
+      <button class="zero" onclick="append('0',this)">0</button>
+      <button onclick="appendDot(this)">.</button>
+      <button class="equals" onclick="calculate(this)">=</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let current = '0';
+  let prev = '';
+  let op = null;
+  let justCalc = false;
+
+  const disp = document.getElementById('display');
+  const expr = document.getElementById('expression');
+
+  function updateDisplay(val) {
+    disp.textContent = val;
+    disp.classList.add('flash');
+    setTimeout(() => disp.classList.remove('flash'), 100);
+  }
+
+  function ripple(btn, e) {
+    const r = document.createElement('span');
+    r.classList.add('ripple');
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(btn.clientWidth, btn.clientHeight);
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (e.clientX - rect.left - size/2) + 'px';
+    r.style.top  = (e.clientY - rect.top  - size/2) + 'px';
+    btn.appendChild(r);
+    setTimeout(() => r.remove(), 500);
+  }
+
+  function append(val, btn) {
+    ripple(btn, event);
+    if (justCalc) { current = val; justCalc = false; }
+    else current = (current === '0') ? val : current + val;
+    updateDisplay(current);
+  }
+
+  function appendDot(btn) {
+    ripple(btn, event);
+    if (justCalc) { current = '0.'; justCalc = false; }
+    else if (!current.includes('.')) current += '.';
+    updateDisplay(current);
+  }
+
+  function setOp(o, btn) {
+    ripple(btn, event);
+    if (op && !justCalc) calculate(null, true);
+    prev = current;
+    op = o;
+    justCalc = false;
+    const symbols = {'+':'+', '-':'−', '*':'×', '/':'÷'};
+    expr.textContent = prev + ' ' + symbols[op];
+    current = '0';
+  }
+
+  function calculate(btn, silent = false) {
+    if (btn) ripple(btn, event);
+    if (!op || prev === '') return;
+    const a = parseFloat(prev), b = parseFloat(current);
+    let res;
+    if (op === '+') res = a + b;
+    else if (op === '-') res = a - b;
+    else if (op === '*') res = a * b;
+    else if (op === '/') res = b === 0 ? 'Error' : a / b;
+    const symbols = {'+':'+', '-':'−', '*':'×', '/':'÷'};
+    if (!silent) expr.textContent = prev + ' ' + symbols[op] + ' ' + current + ' =';
+    current = String(parseFloat(res.toFixed(10)));
+    if (!silent) { op = null; prev = ''; justCalc = true; }
+    updateDisplay(current);
+  }
+
+  function clearAll(btn) {
+    ripple(btn, event);
+    current = '0'; prev = ''; op = null; justCalc = false;
+    expr.textContent = '';
+    updateDisplay('0');
+  }
+
+  function toggleSign(btn) {
+    ripple(btn, event);
+    current = String(parseFloat(current) * -1);
+    updateDisplay(current);
+  }
+
+  function percent(btn) {
+    ripple(btn, event);
+    current = String(parseFloat(current) / 100);
+    updateDisplay(current);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') append(e.key, {getBoundingClientRect:()=>({left:0,top:0}), clientWidth:60, clientHeight:60, appendChild:()=>{}});
+    else if (e.key === '.') appendDot({getBoundingClientRect:()=>({left:0,top:0}), clientWidth:60, clientHeight:60, appendChild:()=>{}});
+    else if (e.key === '+') setOp('+',{getBoundingClientRect:()=>({left:0,top:0}), clientWidth:60, clientHeight:60, appendChild:()=>{}});
+    else if (e.key === '-') setOp('-',{getBoundingClientRect:()=>({left:0,top:0}), clientWidth:60, clientHeight:60, appendChild:()=>{}});
+    else if (e.key === '*') setOp('*',{getBoundingClientRect:()=>({left:0,top:0}), clientWidth:60, clientHeight:60, appendChild:()=>{}});
+    else if (e.key === '/') { e.preventDefault(); setOp('/',{getBoundingClientRect:()=>({left:0,top:0}), clientWidth:60, clientHeight:60, appendChild:()=>{}}); }
+    else if (e.key === 'Enter' || e.key === '=') calculate(null);
+    else if (e.key === 'Backspace') { current = current.length > 1 ? current.slice(0,-1) : '0'; updateDisplay(current); }
+    else if (e.key === 'Escape') clearAll({getBoundingClientRect:()=>({left:0,top:0}), clientWidth:60, clientHeight:60, appendChild:()=>{}});
+  });
+</script>
+</body>
+</html>
